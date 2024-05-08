@@ -5,9 +5,10 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:
     branches:
+      - gd    
       - master
       - dev
-      - gd
+
 jobs:
   push:
     runs-on: ${{ matrix.operating-system }}
