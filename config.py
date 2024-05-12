@@ -41,8 +41,6 @@ extend_base_urls = [
     "https://download.kstore.space/download/2863/live.txt",
     "http://8.210.232.168/xclive.txt",
     "http://111.67.196.181/mtvzb.txt",
-    "https://i.smart-chat.net/source/iptv.txt?token=6740sbdswgd35t9u",
-    "https://taoiptv.com/source/iptv.txt?token=6740sbdswgd35t9u",
     "https://raw.githubusercontent.com/vbskycn/guovin-TV/master/result.txt",
     "https://raw.githubusercontent.com/vbskycn/guovin-TV/master/mylist.txt",
     "https://tv.zhoujie218.top/dsyy/mylist.txt",
