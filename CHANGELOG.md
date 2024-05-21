@@ -1,5 +1,31 @@
 # 更新日志（Changelog）
 
+## v1.1.6
+
+### 2024/5/17
+
+- 增加组播源可全地区运行更新（Added multicast sources to run region-wide updates）
+- 修改默认值：关闭在线检索功能，组播源全地区更新（Change the default value: Disable the online search function and update the multicast source in all regions）
+
+## v1.1.5
+
+### 2024/5/17
+
+- 增加模糊匹配规则，适配在线检索、订阅源、组播源（Add fuzzy matching rules for online search, subscription sources, and multicast sources）
+- 增加订阅源、组播源更新进度条（Added the update progress bar for subscription sources and multicast sources）
+- 优化组播源更新可能出现的无匹配结果情况（Optimize the possible situation of no match results in multicast source updates）
+- 移除部分错误日志打印（Removes some error log prints）
+- 移除严格匹配配置（Removes strict matching configurations）
+
+## v1.1.4
+
+### 2024/5/15
+
+- 新增组播源功能（Added multicast source feature）
+- 新增控制开关，控制多种获取模式的启用状态（Added control switch to manage the activation status of various acquisition modes）
+- 新增严格匹配（Added strict matching）
+- 优化文件读取，提升模板初始化速度（Optimized file reading to improve initialization speed based on templates）
+
 ## v1.1.3
 
 ### 2024/5/8
