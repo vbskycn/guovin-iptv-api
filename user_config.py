@@ -32,7 +32,7 @@ resolution_weight = 0.5
 recent_days = 30
 ipv_type = "ipv4"
 domain_blacklist = ["epg.pw"]
-url_keywords_blacklist = []
+url_keywords_blacklist = [".php","rtp","key"]
 open_subscribe = True
 subscribe_urls = [
     "https://m3u.ibert.me/txt/fmml_dv6.txt",
