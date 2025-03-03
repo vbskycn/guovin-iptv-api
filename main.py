@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import os
 import pickle
 from time import time
 
@@ -30,8 +31,11 @@ from utils.tools import (
     format_interval,
     check_ipv6_support,
     resource_path,
-    get_urls_from_file
+    get_urls_from_file,
+    get_version_info,
+    join_url
 )
+from utils.types import CategoryChannelData
 
 
 class UpdateSource:
@@ -40,18 +44,18 @@ class UpdateSource:
         self.update_progress = None
         self.run_ui = False
         self.tasks = []
-        self.channel_items = {}
+        self.channel_items: CategoryChannelData = {}
         self.hotel_fofa_result = {}
         self.hotel_foodie_result = {}
         self.multicast_result = {}
         self.subscribe_result = {}
         self.online_search_result = {}
-        self.channel_data = {}
+        self.channel_data: CategoryChannelData = {}
         self.pbar = None
         self.total = 0
         self.start_time = None
 
-    async def visit_page(self, channel_names=None):
+    async def visit_page(self, channel_names: list[str] = None):
         tasks_config = [
             ("hotel_fofa", get_channels_by_fofa, "hotel_fofa_result"),
             ("multicast", get_channels_by_multicast, "multicast_result"),
@@ -73,6 +77,9 @@ class UpdateSource:
                 if setting == "subscribe":
                     subscribe_urls = get_urls_from_file(constants.subscribe_path)
                     whitelist_urls = get_urls_from_file(constants.whitelist_path)
+                    if not os.environ.get("GITHUB_ACTIONS") and config.cdn_url:
+                        subscribe_urls = [join_url(config.cdn_url, url) if "raw.githubusercontent.com" in url else url
+                                          for url in subscribe_urls]
                     task = asyncio.create_task(
                         task_func(subscribe_urls, whitelist=whitelist_urls, callback=self.update_progress)
                     )
@@ -85,7 +92,7 @@ class UpdateSource:
                 self.tasks.append(task)
                 setattr(self, result_attr, await task)
 
-    def pbar_update(self, name=""):
+    def pbar_update(self, name: str = ""):
         if self.pbar.n < self.total:
             self.pbar.update()
             self.update_progress(
@@ -93,12 +100,12 @@ class UpdateSource:
                 int((self.pbar.n / self.total) * 100),
             )
 
-    def get_urls_len(self, filter=False):
+    def get_urls_len(self, is_filter: bool = False) -> int:
         data = copy.deepcopy(self.channel_data)
-        if filter:
-            process_nested_dict(data, seen=set(), flag=r"cache:(.*)", force_str="!")
+        if is_filter:
+            process_nested_dict(data, seen={}, flag=r"cache:(.*)", force_str="!")
         processed_urls = set(
-            url_info[0]
+            url_info["url"]
             for channel_obj in data.values()
             for url_info_list in channel_obj.values()
             for url_info in url_info_list
@@ -116,6 +123,9 @@ class UpdateSource:
                     for channel_obj in self.channel_items.values()
                     for name in channel_obj.keys()
                 ]
+                if not channel_names:
+                    print(f"❌ No channel names found! Please check the {config.source_file}!")
+                    return
                 await self.visit_page(channel_names)
                 self.tasks = []
                 append_total_data(
@@ -133,7 +143,7 @@ class UpdateSource:
                 open_sort = config.open_sort
                 if open_sort:
                     urls_total = self.get_urls_len()
-                    self.total = self.get_urls_len(filter=True)
+                    self.total = self.get_urls_len(is_filter=True)
                     print(f"Total urls: {urls_total}, need to sort: {self.total}")
                     sort_callback = lambda: self.pbar_update(name="测速")
                     self.update_progress(
@@ -159,7 +169,7 @@ class UpdateSource:
                 )
                 self.pbar.close()
                 update_file(user_final_file, constants.result_path)
-                if config.open_use_old_result:
+                if config.open_history:
                     if open_sort:
                         get_channel_data_cache_with_compare(
                             channel_data_cache, self.channel_data
@@ -169,7 +179,7 @@ class UpdateSource:
                             "wb",
                     ) as file:
                         pickle.dump(channel_data_cache, file)
-                convert_to_m3u()
+                convert_to_m3u(channel_names[0])
                 print(
                     f"🥳 Update completed! Total time spent: {format_interval(time() - main_start_time)}. Please check the {user_final_file} file!"
                 )
@@ -209,6 +219,8 @@ class UpdateSource:
 
 
 if __name__ == "__main__":
+    info = get_version_info()
+    print(f"ℹ️ {info['name']} Version: {info['version']}")
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     update_source = UpdateSource()

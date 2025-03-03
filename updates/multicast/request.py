@@ -8,9 +8,6 @@ from urllib.parse import parse_qs
 from tqdm.asyncio import tqdm_asyncio
 
 import utils.constants as constants
-from driver.setup import setup_driver
-from driver.utils import search_submit
-from requests_custom.utils import get_soup_requests, close_session
 from updates.fofa import get_channels_by_fofa
 from updates.proxy import get_proxy, get_proxy_next
 from utils.channel import (
@@ -20,8 +17,12 @@ from utils.channel import (
     get_channel_multicast_region_type_list,
     get_channel_multicast_result,
     get_multicast_fofa_search_urls,
+    format_channel_name
 )
 from utils.config import config
+from utils.driver.setup import setup_driver
+from utils.driver.tools import search_submit
+from utils.requests.tools import get_soup_requests, close_session
 from utils.retry import (
     retry_func,
     find_clickable_element_with_retry,
@@ -41,6 +42,7 @@ async def get_channels_by_multicast(names, callback=None):
     Get the channels by multicast
     """
     channels = {}
+    format_names = [format_channel_name(name) for name in names]
     if config.open_use_cache:
         try:
             with open(
@@ -48,7 +50,8 @@ async def get_channels_by_multicast(names, callback=None):
                     "rb",
             ) as file:
                 cache = pickle.load(file) or {}
-                channels = {key: value for key, value in cache.items() if key in names}
+                for name in format_names:
+                    channels[name] = cache.get(name, [])
         except:
             pass
     if config.open_request:
@@ -61,7 +64,7 @@ async def get_channels_by_multicast(names, callback=None):
             proxy = await get_proxy(pageUrl, best=True, with_test=True)
         multicast_region_result = get_multicast_region_result_by_rtp_txt(callback=callback)
         name_region_type_result = get_channel_multicast_name_region_type_result(
-            multicast_region_result, names
+            multicast_region_result, format_names
         )
         region_type_list = get_channel_multicast_region_type_list(name_region_type_result)
         search_region_type_result = defaultdict(lambda: defaultdict(list))
@@ -202,7 +205,7 @@ async def get_channels_by_multicast(names, callback=None):
                             date = item.get("date")
                             if url:
                                 search_region_type_result[region][type].append(
-                                    (url, date, None)
+                                    {"url": url, "date": date}
                                 )
             pbar.close()
         request_channels = get_channel_multicast_result(
